@@ -31,8 +31,80 @@
 	</header>
 
 </div>
-	
+
 <h1>Index :)</h1>
+<h2>Comments</h2>
+<div>
+    <input type="text" id="commentInput" placeholder="Write a comment...">
+    <button onclick="addComment()">Post</button>
+</div>
+<ul id="commentsList"></ul>
+
+<script>
+    // Fetch and display comments
+    function fetchComments() {
+        fetch('/api/comments')
+            .then(res => res.json())
+            .then(comments => {
+                const commentsList = document.getElementById('commentsList');
+                commentsList.innerHTML = ''; // Clear existing comments
+                comments.forEach(comment => {
+                    const li = document.createElement('li');
+                    li.innerHTML = `
+                        ${comment.text}
+                        <button onclick="editComment(${comment.id}, '${comment.text}')">Edit</button>
+                        <button onclick="deleteComment(${comment.id})">Delete</button>
+                    `;
+                    commentsList.appendChild(li);
+                });
+            })
+            .catch(error => console.error('Error fetching comments:', error));
+    }
+
+    // Add a new comment
+    function addComment() {
+        const commentText = document.getElementById('commentInput').value;
+        if (!commentText) return alert('Enter a comment!');
+
+        fetch('/api/comments', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text: commentText })
+        })
+        .then(res => res.json())
+        .then(() => {
+            document.getElementById('commentInput').value = '';
+            fetchComments();
+        })
+        .catch(error => console.error('Error adding comment:', error));
+    }
+
+    // Edit a comment
+    function editComment(id, oldText) {
+        const newText = prompt('Edit your comment:', oldText);
+        if (!newText) return;
+
+        fetch(`/api/comments/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text: newText })
+        })
+        .then(() => fetchComments())
+        .catch(error => console.error('Error editing comment:', error));
+    }
+
+    // Delete a comment
+    function deleteComment(id) {
+        if (!confirm('Are you sure you want to delete this comment?')) return;
+
+        fetch(`/api/comments/${id}`, { method: 'DELETE' })
+        .then(() => fetchComments())
+        .catch(error => console.error('Error deleting comment:', error));
+    }
+
+    // Load comments on page load
+    fetchComments();
+</script>
 
 </body>
 </html>
